@@ -22,12 +22,14 @@ enum State {
     Escape,
 }
 
+/// SLIP decoding context
 pub struct Decoder {
     buffer: Vec<u8>,
     state: State,
 }
 
 impl Decoder {
+    /// Creates a new context with the given maximum buffer size.
     pub fn new(capacity: usize) -> Self {
         Self {
             buffer: Vec::with_capacity(capacity),
@@ -35,6 +37,16 @@ impl Decoder {
         }
     }
 
+    /// Attempts to decode a single SLIP frame from the given source.
+    ///
+    /// # Arguments
+    ///
+    /// * `source` - Encoded SLIP data source implementing the std::io::Read
+    ///              trait
+    ///
+    /// Returns a Vec<u8> containing a decoded message or an empty Vec<u8> if
+    /// of the source data was reached.
+    ///
     pub fn decode<T>(self: &mut Self, source: T) -> self::Result
     where
         T: Read,

@@ -1,12 +1,23 @@
 use super::*;
 
+/// SLIP encoder context
 pub struct Encoder {}
 
 impl Encoder {
+    /// Creates a new encoder context
     pub fn new() -> Self {
         Self {}
     }
 
+    /// Encodes the given buffer in a SLIP frame and forwards it to the sink.
+    ///
+    /// # Arguments
+    ///
+    /// * `buf` - input data buffer for encoding
+    /// * `sink` - output object implementing the std::io::Write trait
+    ///
+    /// Returns the number of bytes written to the sink.
+    ///
     pub fn encode(&mut self, buf: &[u8], sink: &mut dyn std::io::Write) -> std::io::Result<usize> {
         let mut len = sink.write(&[END])?;
 
