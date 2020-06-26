@@ -47,7 +47,7 @@ impl Decoder {
     /// Returns a Vec<u8> containing a decoded message or an empty Vec<u8> if
     /// of the source data was reached.
     ///
-    pub fn decode<T>(self: &mut Self, source: T) -> self::Result
+    pub fn decode<T>(self: &mut Self, source: &mut T) -> self::Result
     where
         T: Read,
     {
@@ -117,7 +117,7 @@ mod tests {
         const INPUT: [u8; 2] = [0xc0, 0xc0];
 
         let mut slip = Decoder::new(32);
-        let res = slip.decode(INPUT.as_ref());
+        let res = slip.decode(&mut INPUT.as_ref());
         assert!(res.is_ok());
         let buf = res.unwrap();
         assert!(buf.is_empty());
@@ -129,7 +129,7 @@ mod tests {
         const DATA: [u8; 5] = [0x01, 0x02, 0x03, 0x04, 0x05];
 
         let mut slip = Decoder::new(32);
-        let buf = slip.decode(INPUT.as_ref()).unwrap();
+        let buf = slip.decode(&mut INPUT.as_ref()).unwrap();
         assert_eq!(DATA.len(), buf.len());
         assert_eq!(&DATA, buf.as_slice());
     }
@@ -141,7 +141,7 @@ mod tests {
         const DATA: [u8; 3] = [0x01, 0xc0, 0x03];
 
         let mut slip = Decoder::new(200);
-        let buf = slip.decode(INPUT.as_ref()).unwrap();
+        let buf = slip.decode(&mut INPUT.as_ref()).unwrap();
         assert_eq!(DATA.len(), buf.len());
         assert_eq!(&DATA, buf.as_slice());
     }
@@ -153,7 +153,7 @@ mod tests {
         const DATA: [u8; 3] = [0x01, 0xdb, 0x03];
 
         let mut slip = Decoder::new(200);
-        let buf = slip.decode(INPUT.as_ref()).unwrap();
+        let buf = slip.decode(&mut INPUT.as_ref()).unwrap();
         assert_eq!(DATA.len(), buf.len());
         assert_eq!(&DATA, buf.as_slice());
     }
@@ -166,11 +166,11 @@ mod tests {
 
         let mut slip = Decoder::new(200);
         {
-            let buf = slip.decode(INPUT_1.as_ref()).unwrap();
+            let buf = slip.decode(&mut INPUT_1.as_ref()).unwrap();
             assert!(buf.is_empty());
         }
         {
-            let buf = slip.decode(INPUT_2.as_ref()).unwrap();
+            let buf = slip.decode(&mut INPUT_2.as_ref()).unwrap();
             assert_eq!(DATA.len(), buf.len());
             assert_eq!(&DATA, buf.as_slice());
         }
