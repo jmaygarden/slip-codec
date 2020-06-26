@@ -4,6 +4,7 @@ description = "Serial Line Internet Protocol (SLIP) encoder/decoder"
 edition = "2018"
 license = "MIT"
 name = "slip-codec"
+repository = "https://github.com/jmaygarden/slip-codec"
 version = "0.1.0"
 
 [dependencies]
