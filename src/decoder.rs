@@ -1,10 +1,11 @@
 use super::*;
-use std::io::Read;
+use std::io::{Read, Write};
 
 #[derive(Debug)]
 pub enum Error {
     FramingError,
     OversizedPacket,
+    EndOfStream,
     ReadError(std::io::Error),
 }
 
@@ -14,7 +15,7 @@ impl From<std::io::Error> for Error {
     }
 }
 
-pub type Result = std::result::Result<Vec<u8>, self::Error>;
+pub type Result = std::result::Result<usize, self::Error>;
 
 enum State {
     Normal,
@@ -24,16 +25,30 @@ enum State {
 
 /// SLIP decoding context
 pub struct Decoder {
-    buffer: Vec<u8>,
+    count: usize,
     state: State,
 }
 
 impl Decoder {
     /// Creates a new context with the given maximum buffer size.
-    pub fn new(capacity: usize) -> Self {
+    pub fn new() -> Self {
         Self {
-            buffer: Vec::with_capacity(capacity),
+            count: 0usize,
             state: State::Normal,
+        }
+    }
+
+    fn push(self: &mut Self, sink: &mut dyn Write, value: u8) -> self::Result {
+        match sink.write(&[value]) {
+            Ok(len) => {
+                if len != 1 {
+                    Err(Error::OversizedPacket)
+                } else {
+                    self.count += 1;
+                    Ok(1usize)
+                }
+            }
+            Err(error) => Err(error.into()),
         }
     }
 
@@ -47,55 +62,44 @@ impl Decoder {
     /// Returns a Vec<u8> containing a decoded message or an empty Vec<u8> if
     /// of the source data was reached.
     ///
-    pub fn decode<T>(self: &mut Self, source: &mut T) -> self::Result
-    where
-        T: Read,
-    {
+    pub fn decode(self: &mut Self, source: &mut dyn Read, sink: &mut dyn Write) -> self::Result {
         for value in source.bytes() {
             let value = value?;
-
-            if self.buffer.len() == self.buffer.capacity() {
-                self.buffer.clear();
-                self.state = State::Error;
-
-                return Err(Error::OversizedPacket);
-            }
 
             match self.state {
                 State::Normal => match value {
                     END => {
-                        if !self.buffer.is_empty() {
-                            let mut buffer = Vec::<u8>::new();
+                        if self.count > 0 {
+                            let len = self.count;
 
-                            buffer.extend(self.buffer.iter().clone());
-                            self.buffer.clear();
+                            self.count = 0usize;
 
-                            return Ok(buffer);
+                            return Ok(len);
                         }
                     }
                     ESC => {
                         self.state = State::Escape;
                     }
                     _ => {
-                        self.buffer.push(value);
+                        self.push(sink, value)?;
                     }
                 },
                 State::Error => {
                     if value == END {
+                        self.count = 0usize;
                         self.state = State::Normal;
                     }
                 }
                 State::Escape => match value {
                     ESC_END => {
-                        self.buffer.push(END);
+                        self.push(sink, END)?;
                         self.state = State::Normal;
                     }
                     ESC_ESC => {
-                        self.buffer.push(ESC);
+                        self.push(sink, ESC)?;
                         self.state = State::Normal;
                     }
                     _ => {
-                        self.buffer.clear();
                         self.state = State::Error;
 
                         return Err(Error::FramingError);
@@ -104,7 +108,7 @@ impl Decoder {
             }
         }
 
-        Ok(Vec::<u8>::new())
+        Err(Error::EndOfStream)
     }
 }
 
@@ -116,10 +120,10 @@ mod tests {
     fn empty_decode() {
         const INPUT: [u8; 2] = [0xc0, 0xc0];
 
-        let mut slip = Decoder::new(32);
-        let res = slip.decode(&mut INPUT.as_ref());
-        assert!(res.is_ok());
-        let buf = res.unwrap();
+        let mut slip = Decoder::new();
+        let mut buf: Vec<u8> = Vec::new();
+        let res = slip.decode(&mut INPUT.as_ref(), &mut buf);
+        assert!(res.is_err());
         assert!(buf.is_empty());
     }
 
@@ -128,10 +132,12 @@ mod tests {
         const INPUT: [u8; 7] = [0xc0, 0x01, 0x02, 0x03, 0x04, 0x05, 0xc0];
         const DATA: [u8; 5] = [0x01, 0x02, 0x03, 0x04, 0x05];
 
-        let mut slip = Decoder::new(32);
-        let buf = slip.decode(&mut INPUT.as_ref()).unwrap();
+        let mut slip = Decoder::new();
+        let mut buf = [0u8; DATA.len()];
+        let len = slip.decode(&mut INPUT.as_ref(), &mut buf.as_mut()).unwrap();
+        assert_eq!(DATA.len(), len);
         assert_eq!(DATA.len(), buf.len());
-        assert_eq!(&DATA, buf.as_slice());
+        assert_eq!(&DATA, &buf);
     }
 
     /// Ensure that [ESC, ESC_END] -> [END]
@@ -140,8 +146,10 @@ mod tests {
         const INPUT: [u8; 6] = [0xc0, 0x01, 0xdb, 0xdc, 0x03, 0xc0];
         const DATA: [u8; 3] = [0x01, 0xc0, 0x03];
 
-        let mut slip = Decoder::new(200);
-        let buf = slip.decode(&mut INPUT.as_ref()).unwrap();
+        let mut slip = Decoder::new();
+        let mut buf: Vec<u8> = Vec::new();
+        let len = slip.decode(&mut INPUT.as_ref(), &mut buf).unwrap();
+        assert_eq!(DATA.len(), len);
         assert_eq!(DATA.len(), buf.len());
         assert_eq!(&DATA, buf.as_slice());
     }
@@ -152,8 +160,10 @@ mod tests {
         const INPUT: [u8; 6] = [0xc0, 0x01, 0xdb, 0xdd, 0x03, 0xc0];
         const DATA: [u8; 3] = [0x01, 0xdb, 0x03];
 
-        let mut slip = Decoder::new(200);
-        let buf = slip.decode(&mut INPUT.as_ref()).unwrap();
+        let mut slip = Decoder::new();
+        let mut buf: Vec<u8> = Vec::new();
+        let len = slip.decode(&mut INPUT.as_ref(), &mut buf).unwrap();
+        assert_eq!(DATA.len(), len);
         assert_eq!(DATA.len(), buf.len());
         assert_eq!(&DATA, buf.as_slice());
     }
@@ -164,13 +174,18 @@ mod tests {
         const INPUT_2: [u8; 6] = [0x05, 0x06, 0x07, 0x08, 0x09, 0xc0];
         const DATA: [u8; 10] = [0x01, 0x02, 0x03, 0x04, 0x05, 0x05, 0x06, 0x07, 0x08, 0x09];
 
-        let mut slip = Decoder::new(200);
+        let mut slip = Decoder::new();
+        let mut buf: Vec<u8> = Vec::new();
+
         {
-            let buf = slip.decode(&mut INPUT_1.as_ref()).unwrap();
-            assert!(buf.is_empty());
+            let res = slip.decode(&mut INPUT_1.as_ref(), &mut buf);
+            assert!(res.is_err());
+            assert_eq!(5, buf.len());
         }
+
         {
-            let buf = slip.decode(&mut INPUT_2.as_ref()).unwrap();
+            let len = slip.decode(&mut INPUT_2.as_ref(), &mut buf).unwrap();
+            assert_eq!(DATA.len(), len);
             assert_eq!(DATA.len(), buf.len());
             assert_eq!(&DATA, buf.as_slice());
         }
