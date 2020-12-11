@@ -1,4 +1,5 @@
-use super::*;
+use crate::{END, ESC, ESC_END, ESC_ESC};
+
 use std::io::{Read, Write};
 
 #[derive(Debug)]

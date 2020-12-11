@@ -1,4 +1,4 @@
-use super::*;
+use crate::{END, ESC, ESC_END, ESC_ESC};
 
 /// SLIP encoder context
 pub struct Encoder {}
