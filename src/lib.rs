@@ -2,7 +2,7 @@
 mod default;
 
 #[cfg(not(feature = "tokio"))]
-pub use crate::default::{Decoder, Encoder, Error, Result};
+pub use crate::default::{encode, Decoder, Encoder, Error, Result};
 
 #[cfg(feature = "tokio")]
 mod tokio;
