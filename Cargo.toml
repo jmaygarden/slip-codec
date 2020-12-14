@@ -5,6 +5,12 @@ edition = "2018"
 license = "MIT"
 name = "slip-codec"
 repository = "https://github.com/jmaygarden/slip-codec"
-version = "0.2.0"
+version = "0.2.2"
+
+[features]
+default = []
+tokio = ["bytes", "tokio-util"]
 
 [dependencies]
+bytes = { version = "0.6", optional = true }
+tokio-util = { version ="0.5", features = ["codec"], optional = true }

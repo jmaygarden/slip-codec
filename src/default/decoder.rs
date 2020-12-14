@@ -1,4 +1,5 @@
-use super::*;
+use crate::{END, ESC, ESC_END, ESC_ESC};
+
 use std::io::{Read, Write};
 
 #[derive(Debug)]
@@ -7,6 +8,17 @@ pub enum Error {
     OversizedPacket,
     EndOfStream,
     ReadError(std::io::Error),
+}
+
+impl From<Error> for std::io::Error {
+    fn from(err: Error) -> std::io::Error {
+        match err {
+            Error::FramingError => std::io::Error::new(std::io::ErrorKind::Other, format!("{:?}", err)),
+            Error::OversizedPacket => std::io::Error::new(std::io::ErrorKind::Other, format!("{:?}", err)),
+            Error::EndOfStream => std::io::Error::new(std::io::ErrorKind::Other, format!("{:?}", err)),
+            Error::ReadError(err) => err,
+        }
+    }
 }
 
 impl From<std::io::Error> for Error {
