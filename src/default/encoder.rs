@@ -1,5 +1,27 @@
 use crate::{END, ESC, ESC_END, ESC_ESC};
 
+pub fn encode(buf: &[u8], sink: &mut dyn std::io::Write) -> std::io::Result<usize> {
+    let mut len = sink.write(&[END])?;
+
+    for value in buf.iter() {
+        match *value {
+            END => {
+                len += sink.write(&[ESC, ESC_END])?;
+            }
+            ESC => {
+                len += sink.write(&[ESC, ESC_ESC])?;
+            }
+            _ => {
+                len += sink.write(&[*value])?;
+            }
+        }
+    }
+
+    len += sink.write(&[END])?;
+
+    Ok(len)
+}
+
 /// SLIP encoder context
 pub struct Encoder {}
 
@@ -19,25 +41,7 @@ impl Encoder {
     /// Returns the number of bytes written to the sink.
     ///
     pub fn encode(&mut self, buf: &[u8], sink: &mut dyn std::io::Write) -> std::io::Result<usize> {
-        let mut len = sink.write(&[END])?;
-
-        for value in buf.iter() {
-            match *value {
-                END => {
-                    len += sink.write(&[ESC, ESC_END])?;
-                }
-                ESC => {
-                    len += sink.write(&[ESC, ESC_ESC])?;
-                }
-                _ => {
-                    len += sink.write(&[*value])?;
-                }
-            }
-        }
-
-        len += sink.write(&[END])?;
-
-        Ok(len)
+        encode(buf, sink)
     }
 }
 

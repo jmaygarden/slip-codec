@@ -47,7 +47,7 @@ checksum = "6b063f57ec186e6140e2b8b6921e5f1bd89c7356dda5b33acc5401203ca6131c"
 
 [[package]]
 name = "slip-codec"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "bytes",
  "tokio-util",
