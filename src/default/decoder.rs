@@ -10,6 +10,17 @@ pub enum Error {
     ReadError(std::io::Error),
 }
 
+impl From<Error> for std::io::Error {
+    fn from(err: Error) -> std::io::Error {
+        match err {
+            Error::FramingError => std::io::Error::new(std::io::ErrorKind::Other, format!("{:?}", err)),
+            Error::OversizedPacket => std::io::Error::new(std::io::ErrorKind::Other, format!("{:?}", err)),
+            Error::EndOfStream => std::io::Error::new(std::io::ErrorKind::Other, format!("{:?}", err)),
+            Error::ReadError(err) => err,
+        }
+    }
+}
+
 impl From<std::io::Error> for Error {
     fn from(err: std::io::Error) -> Self {
         Error::ReadError(err)
