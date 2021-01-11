@@ -1,13 +1,13 @@
-#[cfg(not(feature = "tokio"))]
+#[cfg(not(feature = "async"))]
 mod default;
 
-#[cfg(not(feature = "tokio"))]
+#[cfg(not(feature = "async"))]
 pub use crate::default::{encode, Decoder, Encoder, Error, Result};
 
-#[cfg(feature = "tokio")]
+#[cfg(feature = "async")]
 mod tokio;
 
-#[cfg(feature = "tokio")]
+#[cfg(feature = "async")]
 pub use crate::tokio::{SlipCodecError, SlipDecoder, SlipEncoder};
 
 const END: u8 = 0xC0;

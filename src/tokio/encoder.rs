@@ -1,6 +1,6 @@
 use crate::{SlipCodecError, END, ESC, ESC_END, ESC_ESC};
 
-use bytes::{BufMut, BytesMut};
+use bytes::{Buf, BufMut, Bytes, BytesMut};
 use tokio_util::codec::Encoder;
 
 /// SLIP encoder context
@@ -13,16 +13,16 @@ impl SlipEncoder {
     }
 }
 
-impl Encoder<BytesMut> for SlipEncoder {
+impl Encoder<Bytes> for SlipEncoder {
     type Error = SlipCodecError;
 
-    fn encode(&mut self, item: BytesMut, dst: &mut BytesMut) -> Result<(), SlipCodecError> {
+    fn encode(&mut self, mut item: Bytes, dst: &mut BytesMut) -> Result<(), SlipCodecError> {
         dst.reserve(item.len());
 
         dst.put_u8(END);
 
-        for value in item.iter() {
-            let value = *value;
+        while item.has_remaining() {
+            let value = item.get_u8();
 
             match value {
                 END => {
