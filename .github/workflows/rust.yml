@@ -16,7 +16,16 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - name: Install dependencies
+      run: |
+        export DEBIAN_FRONTEND=noninteractive
+        sudo apt-get clean && sudo apt-get update
+        sudo apt-get install -y libudev-dev
     - name: Build
       run: cargo build --verbose
     - name: Run tests
       run: cargo test --verbose
+    - name: Build async
+      run: cargo build --verbose --features async
+    - name: Run async tests
+      run: cargo test --verbose --features async
