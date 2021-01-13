@@ -471,7 +471,7 @@ checksum = "c111b5bd5695e56cffe5129854aa230b39c93a305372fdbb2668ca2394eea9f8"
 
 [[package]]
 name = "slip-codec"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "bytes",
  "futures",

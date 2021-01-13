@@ -80,7 +80,7 @@ impl AsyncWrite for AsyncTTYPort {
 }
 
 async fn run_source(port: AsyncTTYPort) {
-    let mut sink = tokio_util::codec::Framed::new(port, slip_codec::SlipEncoder::new());
+    let mut sink = tokio_util::codec::Framed::new(port, slip_codec::SlipCodec::new());
 
     for message in ["foo", "bar", "baz"].iter() {
         let message = message.to_string().into();
@@ -91,7 +91,7 @@ async fn run_source(port: AsyncTTYPort) {
 }
 
 async fn run_sink(port: AsyncTTYPort) {
-    let mut source = tokio_util::codec::Framed::new(port, slip_codec::SlipDecoder::new());
+    let mut source = tokio_util::codec::Framed::new(port, slip_codec::SlipCodec::new());
 
     loop {
         match source.next().await {

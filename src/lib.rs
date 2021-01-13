@@ -8,7 +8,7 @@ pub use crate::default::{encode, Decoder, Encoder, Error, Result};
 mod tokio;
 
 #[cfg(feature = "async")]
-pub use crate::tokio::{SlipCodecError, SlipDecoder, SlipEncoder};
+pub use crate::tokio::{SlipCodec, SlipCodecError, SlipDecoder, SlipEncoder};
 
 const END: u8 = 0xC0;
 const ESC: u8 = 0xDB;

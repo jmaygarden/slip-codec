@@ -5,7 +5,7 @@ edition = "2018"
 license = "MIT"
 name = "slip-codec"
 repository = "https://github.com/jmaygarden/slip-codec"
-version = "0.2.3"
+version = "0.2.4"
 
 [features]
 default = []
