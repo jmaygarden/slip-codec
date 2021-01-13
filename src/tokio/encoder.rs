@@ -55,7 +55,7 @@ mod tests {
         let mut output = BytesMut::new();
 
         let mut slip = SlipEncoder::new();
-        slip.encode(BytesMut::new(), &mut output).unwrap();
+        slip.encode(Bytes::new(), &mut output).unwrap();
         assert_eq!(&EXPECTED[..], &output);
     }
 
@@ -66,8 +66,7 @@ mod tests {
         let mut output = BytesMut::new();
 
         let mut slip = SlipEncoder::new();
-        slip.encode(BytesMut::from(&INPUT[..]), &mut output)
-            .unwrap();
+        slip.encode(Bytes::from(&INPUT[..]), &mut output).unwrap();
         assert_eq!(&EXPECTED[..], &output);
     }
 
@@ -78,8 +77,7 @@ mod tests {
         let mut output = BytesMut::new();
 
         let mut slip = SlipEncoder::new();
-        slip.encode(BytesMut::from(&INPUT[..]), &mut output)
-            .unwrap();
+        slip.encode(Bytes::from(&INPUT[..]), &mut output).unwrap();
         assert_eq!(&EXPECTED[..], &output);
     }
 }

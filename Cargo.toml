@@ -8,7 +8,7 @@ repository = "https://github.com/jmaygarden/slip-codec"
 version = "0.2.3"
 
 [features]
-default = ["async"]
+default = []
 async = ["bytes", "tokio-util"]
 
 [dependencies]
@@ -20,3 +20,7 @@ futures = "0.3"
 futures-sink = "0.3"
 serialport = "4.0"
 tokio = { version = "1.0", features = ["full"] }
+
+[[example]]
+name = "tokio-serial"
+required-features = ["async"]
