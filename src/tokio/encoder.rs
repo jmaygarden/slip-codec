@@ -1,62 +1,56 @@
-use crate::{SlipCodecError, END, ESC, ESC_END, ESC_ESC};
-
-use bytes::{Buf, BufMut, Bytes, BytesMut};
+use bytes::{BufMut, Bytes, BytesMut};
 use tokio_util::codec::Encoder;
 
 /// SLIP encoder context
-pub struct SlipEncoder {}
+pub struct SlipEncoder {
+    inner: crate::SlipEncoder,
+}
 
 impl SlipEncoder {
     /// Creates a new encoder context
-    pub fn new() -> Self {
-        Self {}
+    pub fn new(begin_with_end: bool) -> Self {
+        Self {
+            inner: crate::SlipEncoder::new(begin_with_end),
+        }
     }
 }
 
 impl Encoder<Bytes> for SlipEncoder {
-    type Error = SlipCodecError;
+    type Error = std::io::Error;
 
-    fn encode(&mut self, mut item: Bytes, dst: &mut BytesMut) -> Result<(), SlipCodecError> {
-        dst.reserve(item.len());
+    fn encode(&mut self, item: Bytes, dst: &mut BytesMut) -> Result<(), Self::Error> {
+        self.inner
+            .encode(item.as_ref(), &mut dst.writer())
+            .map(|_| ())
+    }
+}
 
-        dst.put_u8(END);
-
-        while item.has_remaining() {
-            let value = item.get_u8();
-
-            match value {
-                END => {
-                    dst.put_u8(ESC);
-                    dst.put_u8(ESC_END);
-                }
-                ESC => {
-                    dst.put_u8(ESC);
-                    dst.put_u8(ESC_ESC);
-                }
-                _ => {
-                    dst.put_u8(value);
-                }
-            }
-        }
-
-        dst.put_u8(END);
-
-        Ok(())
+impl Default for SlipEncoder {
+    fn default() -> Self {
+        Self::new(true)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::{END, ESC, ESC_END, ESC_ESC};
 
     #[test]
     fn empty_encode() {
         const EXPECTED: [u8; 2] = [0xc0, 0xc0];
-        let mut output = BytesMut::new();
 
-        let mut slip = SlipEncoder::new();
+        // default is to begin and end with END tokens
+        let mut output = BytesMut::new();
+        let mut slip = SlipEncoder::default();
         slip.encode(Bytes::new(), &mut output).unwrap();
         assert_eq!(&EXPECTED[..], &output);
+
+        // override to only use END token to terminate packet
+        let mut output = BytesMut::new();
+        let mut slip = SlipEncoder::new(false);
+        slip.encode(Bytes::new(), &mut output).unwrap();
+        assert_eq!(&EXPECTED[..1], &output);
     }
 
     #[test]
@@ -65,7 +59,7 @@ mod tests {
         const EXPECTED: [u8; 6] = [0xc0, 0x01, ESC, ESC_ESC, 0x03, 0xc0];
         let mut output = BytesMut::new();
 
-        let mut slip = SlipEncoder::new();
+        let mut slip = SlipEncoder::default();
         slip.encode(Bytes::from(&INPUT[..]), &mut output).unwrap();
         assert_eq!(&EXPECTED[..], &output);
     }
@@ -76,7 +70,7 @@ mod tests {
         const EXPECTED: [u8; 6] = [0xc0, 0x01, ESC, ESC_END, 0x03, 0xc0];
         let mut output = BytesMut::new();
 
-        let mut slip = SlipEncoder::new();
+        let mut slip = SlipEncoder::default();
         slip.encode(Bytes::from(&INPUT[..]), &mut output).unwrap();
         assert_eq!(&EXPECTED[..], &output);
     }

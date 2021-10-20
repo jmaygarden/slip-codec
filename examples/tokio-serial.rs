@@ -1,5 +1,6 @@
 use futures::{ready, SinkExt, StreamExt};
 use serialport::SerialPort;
+use slip_codec::tokio::SlipCodec;
 use std::io::{Read, Write};
 use std::task::Context;
 use tokio::io::unix::AsyncFd;
@@ -80,7 +81,7 @@ impl AsyncWrite for AsyncTTYPort {
 }
 
 async fn run_source(port: AsyncTTYPort) {
-    let mut sink = tokio_util::codec::Framed::new(port, slip_codec::SlipCodec::new());
+    let mut sink = tokio_util::codec::Framed::new(port, SlipCodec::new());
 
     for message in ["foo", "bar", "baz"].iter() {
         let message = message.to_string().into();
@@ -91,15 +92,14 @@ async fn run_source(port: AsyncTTYPort) {
 }
 
 async fn run_sink(port: AsyncTTYPort) {
-    let mut source = tokio_util::codec::Framed::new(port, slip_codec::SlipCodec::new());
+    let mut source = tokio_util::codec::Framed::new(port, SlipCodec::new());
 
     loop {
-        match source.next().await {
-            Some(result) => match result {
+        if let Some(result)  = source.next().await {
+            match result {
                 Ok(message) => println!("recv {:?}", message),
                 Err(_) => break,
-            },
-            None => (),
+            }
         }
     }
 }
