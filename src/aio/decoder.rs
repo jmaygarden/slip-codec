@@ -1,6 +1,6 @@
 use crate::{SlipError, MAX_PACKET_SIZE};
 use bytes::{Buf, BufMut, BytesMut};
-use tokio_util::codec::Decoder;
+use asynchronous_codec::Decoder;
 
 /// SLIP decoding context
 pub struct SlipDecoder {

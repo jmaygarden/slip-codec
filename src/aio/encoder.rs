@@ -1,5 +1,5 @@
 use bytes::{BufMut, Bytes, BytesMut};
-use tokio_util::codec::Encoder;
+use asynchronous_codec::Encoder;
 
 /// SLIP encoder context
 pub struct SlipEncoder {
@@ -15,10 +15,11 @@ impl SlipEncoder {
     }
 }
 
-impl Encoder<Bytes> for SlipEncoder {
+impl Encoder for SlipEncoder {
+    type Item = Bytes;
     type Error = std::io::Error;
 
-    fn encode(&mut self, item: Bytes, dst: &mut BytesMut) -> Result<(), Self::Error> {
+    fn encode(&mut self, item: Self::Item, dst: &mut BytesMut) -> Result<(), Self::Error> {
         self.inner
             .encode(item.as_ref(), &mut dst.writer())
             .map(|_| ())
