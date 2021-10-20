@@ -1,6 +1,7 @@
 use crate::{END, ESC, ESC_END, ESC_ESC};
 use std::io::{Read, Write};
 
+/// SLIP decoder error type
 #[derive(Debug)]
 pub enum SlipError {
     FramingError,
@@ -40,7 +41,7 @@ enum State {
     Escape,
 }
 
-/// SLIP decoding context
+/// SLIP decoder context
 pub struct SlipDecoder {
     count: usize,
     state: State,
