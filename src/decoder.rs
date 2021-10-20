@@ -1,33 +1,38 @@
 use crate::{END, ESC, ESC_END, ESC_ESC};
-
 use std::io::{Read, Write};
 
 #[derive(Debug)]
-pub enum Error {
+pub enum SlipError {
     FramingError,
     OversizedPacket,
     EndOfStream,
     ReadError(std::io::Error),
 }
 
-impl From<Error> for std::io::Error {
-    fn from(err: Error) -> std::io::Error {
+impl From<SlipError> for std::io::Error {
+    fn from(err: SlipError) -> std::io::Error {
         match err {
-            Error::FramingError => std::io::Error::new(std::io::ErrorKind::Other, format!("{:?}", err)),
-            Error::OversizedPacket => std::io::Error::new(std::io::ErrorKind::Other, format!("{:?}", err)),
-            Error::EndOfStream => std::io::Error::new(std::io::ErrorKind::Other, format!("{:?}", err)),
-            Error::ReadError(err) => err,
+            SlipError::FramingError => {
+                std::io::Error::new(std::io::ErrorKind::Other, format!("{:?}", err))
+            }
+            SlipError::OversizedPacket => {
+                std::io::Error::new(std::io::ErrorKind::Other, format!("{:?}", err))
+            }
+            SlipError::EndOfStream => {
+                std::io::Error::new(std::io::ErrorKind::Other, format!("{:?}", err))
+            }
+            SlipError::ReadError(err) => err,
         }
     }
 }
 
-impl From<std::io::Error> for Error {
+impl From<std::io::Error> for SlipError {
     fn from(err: std::io::Error) -> Self {
-        Error::ReadError(err)
+        SlipError::ReadError(err)
     }
 }
 
-pub type Result = std::result::Result<usize, self::Error>;
+pub type SlipResult = std::result::Result<usize, self::SlipError>;
 
 enum State {
     Normal,
@@ -36,12 +41,12 @@ enum State {
 }
 
 /// SLIP decoding context
-pub struct Decoder {
+pub struct SlipDecoder {
     count: usize,
     state: State,
 }
 
-impl Decoder {
+impl SlipDecoder {
     /// Creates a new context with the given maximum buffer size.
     pub fn new() -> Self {
         Self {
@@ -50,11 +55,11 @@ impl Decoder {
         }
     }
 
-    fn push(self: &mut Self, sink: &mut dyn Write, value: u8) -> self::Result {
+    fn push(&mut self, sink: &mut dyn Write, value: u8) -> self::SlipResult {
         match sink.write(&[value]) {
             Ok(len) => {
                 if len != 1 {
-                    Err(Error::OversizedPacket)
+                    Err(SlipError::OversizedPacket)
                 } else {
                     self.count += 1;
                     Ok(1usize)
@@ -74,9 +79,12 @@ impl Decoder {
     /// Returns a Vec<u8> containing a decoded message or an empty Vec<u8> if
     /// of the source data was reached.
     ///
-    pub fn decode(self: &mut Self, source: &mut dyn Read, sink: &mut dyn Write) -> self::Result {
+    pub fn decode(&mut self, source: &mut dyn Read, sink: &mut dyn Write) -> self::SlipResult {
+        eprintln!("{}:{}", file!(), line!());
         for value in source.bytes() {
             let value = value?;
+
+            eprintln!("{}:{} value => {:02X}", file!(), line!(), value);
 
             match self.state {
                 State::Normal => match value {
@@ -114,13 +122,19 @@ impl Decoder {
                     _ => {
                         self.state = State::Error;
 
-                        return Err(Error::FramingError);
+                        return Err(SlipError::FramingError);
                     }
                 },
             }
         }
 
-        Err(Error::EndOfStream)
+        Err(SlipError::EndOfStream)
+    }
+}
+
+impl Default for SlipDecoder {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -132,7 +146,7 @@ mod tests {
     fn empty_decode() {
         const INPUT: [u8; 2] = [0xc0, 0xc0];
 
-        let mut slip = Decoder::new();
+        let mut slip = SlipDecoder::new();
         let mut buf: Vec<u8> = Vec::new();
         let res = slip.decode(&mut INPUT.as_ref(), &mut buf);
         assert!(res.is_err());
@@ -144,7 +158,7 @@ mod tests {
         const INPUT: [u8; 7] = [0xc0, 0x01, 0x02, 0x03, 0x04, 0x05, 0xc0];
         const DATA: [u8; 5] = [0x01, 0x02, 0x03, 0x04, 0x05];
 
-        let mut slip = Decoder::new();
+        let mut slip = SlipDecoder::new();
         let mut buf = [0u8; DATA.len()];
         let len = slip.decode(&mut INPUT.as_ref(), &mut buf.as_mut()).unwrap();
         assert_eq!(DATA.len(), len);
@@ -158,7 +172,7 @@ mod tests {
         const INPUT: [u8; 6] = [0xc0, 0x01, 0xdb, 0xdc, 0x03, 0xc0];
         const DATA: [u8; 3] = [0x01, 0xc0, 0x03];
 
-        let mut slip = Decoder::new();
+        let mut slip = SlipDecoder::new();
         let mut buf: Vec<u8> = Vec::new();
         let len = slip.decode(&mut INPUT.as_ref(), &mut buf).unwrap();
         assert_eq!(DATA.len(), len);
@@ -172,7 +186,7 @@ mod tests {
         const INPUT: [u8; 6] = [0xc0, 0x01, 0xdb, 0xdd, 0x03, 0xc0];
         const DATA: [u8; 3] = [0x01, 0xdb, 0x03];
 
-        let mut slip = Decoder::new();
+        let mut slip = SlipDecoder::new();
         let mut buf: Vec<u8> = Vec::new();
         let len = slip.decode(&mut INPUT.as_ref(), &mut buf).unwrap();
         assert_eq!(DATA.len(), len);
@@ -186,7 +200,7 @@ mod tests {
         const INPUT_2: [u8; 6] = [0x05, 0x06, 0x07, 0x08, 0x09, 0xc0];
         const DATA: [u8; 10] = [0x01, 0x02, 0x03, 0x04, 0x05, 0x05, 0x06, 0x07, 0x08, 0x09];
 
-        let mut slip = Decoder::new();
+        let mut slip = SlipDecoder::new();
         let mut buf: Vec<u8> = Vec::new();
 
         {
