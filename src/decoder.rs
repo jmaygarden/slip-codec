@@ -81,11 +81,8 @@ impl SlipDecoder {
     /// of the source data was reached.
     ///
     pub fn decode(&mut self, source: &mut dyn Read, sink: &mut dyn Write) -> self::SlipResult {
-        eprintln!("{}:{}", file!(), line!());
         for value in source.bytes() {
             let value = value?;
-
-            eprintln!("{}:{} value => {:02X}", file!(), line!(), value);
 
             match self.state {
                 State::Normal => match value {
