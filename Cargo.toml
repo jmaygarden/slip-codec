@@ -5,7 +5,7 @@ edition = "2018"
 license = "MIT"
 name = "slip-codec"
 repository = "https://github.com/jmaygarden/slip-codec"
-version = "0.3.2"
+version = "0.3.3"
 
 [features]
 default = []
@@ -15,13 +15,13 @@ tokio-codec = ["bytes", "tokio-util"]
 [dependencies]
 asynchronous-codec = { version = "0.6", optional = true }
 bytes = { version = "1", optional = true }
-tokio-util = { version = "0.6", features = ["codec"], optional = true }
+tokio-util = { version = "0.7", features = ["codec"], optional = true }
 
 [dev-dependencies]
 futures = "0.3"
 futures-sink = "0.3"
-serialport = "4.0"
-tokio = { version = "1.0", features = ["full"] }
+serialport = "4"
+tokio = { version = "1", features = ["full"] }
 
 [[example]]
 name = "tokio-serial"
