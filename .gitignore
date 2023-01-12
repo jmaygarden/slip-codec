@@ -6,3 +6,6 @@
 **/*.rs.bk
 
 .DS_Store
+
+# Don't save lock file for library
+Cargo.lock
