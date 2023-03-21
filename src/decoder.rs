@@ -35,6 +35,7 @@ impl From<std::io::Error> for SlipError {
 
 pub type SlipResult = std::result::Result<usize, self::SlipError>;
 
+#[derive(Debug)]
 enum State {
     Normal,
     Error,
@@ -42,6 +43,7 @@ enum State {
 }
 
 /// SLIP decoder context
+#[derive(Debug)]
 pub struct SlipDecoder {
     count: usize,
     state: State,

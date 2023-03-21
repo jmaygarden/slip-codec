@@ -1,6 +1,7 @@
 use crate::{END, ESC, ESC_END, ESC_ESC};
 
 /// SLIP encoder context
+#[derive(Debug)]
 pub struct SlipEncoder {
     begin_with_end: bool,
 }

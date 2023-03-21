@@ -3,6 +3,7 @@ use crate::{SlipError, MAX_PACKET_SIZE};
 use bytes::{Bytes, BytesMut};
 use tokio_util::codec::{Decoder, Encoder};
 
+#[derive(Debug)]
 pub struct SlipCodec {
     decoder: SlipDecoder,
     encoder: SlipEncoder,
