@@ -3,6 +3,7 @@ use crate::{SlipError, MAX_PACKET_SIZE};
 use bytes::{Bytes, BytesMut};
 use asynchronous_codec::{Decoder, Encoder};
 
+#[derive(Debug)]
 pub struct SlipCodec {
     decoder: SlipDecoder,
     encoder: SlipEncoder,

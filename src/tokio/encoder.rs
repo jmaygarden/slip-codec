@@ -2,6 +2,7 @@ use bytes::{BufMut, Bytes, BytesMut};
 use tokio_util::codec::Encoder;
 
 /// SLIP encoder context
+#[derive(Debug)]
 pub struct SlipEncoder {
     inner: crate::SlipEncoder,
 }

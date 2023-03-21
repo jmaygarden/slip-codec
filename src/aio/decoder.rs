@@ -3,6 +3,7 @@ use bytes::{Buf, BufMut, BytesMut};
 use asynchronous_codec::Decoder;
 
 /// SLIP decoding context
+#[derive(Debug)]
 pub struct SlipDecoder {
     buf: BytesMut,
     capacity: usize,
