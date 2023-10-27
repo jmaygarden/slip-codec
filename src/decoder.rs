@@ -216,4 +216,32 @@ mod tests {
             assert_eq!(&DATA, buf.as_slice());
         }
     }
+
+    #[test]
+    fn compound_decode() {
+        const INPUT: [u8; 13] = [
+            0xc0, 0x01, 0x02, 0x03, 0x04, 0x05, 0xc0, 0x05, 0x06, 0x07, 0x08, 0x09, 0xc0,
+        ];
+        const DATA_1: [u8; 5] = [0x01, 0x02, 0x03, 0x04, 0x05];
+        const DATA_2: [u8; 5] = [0x05, 0x06, 0x07, 0x08, 0x09];
+
+        let mut slip = SlipDecoder::new();
+        let reader: &mut dyn std::io::Read = &mut INPUT.as_ref();
+
+        {
+            let mut buf: Vec<u8> = Vec::new();
+            let len = slip.decode(reader, &mut buf).unwrap();
+            assert_eq!(DATA_1.len(), len);
+            assert_eq!(DATA_1.len(), buf.len());
+            assert_eq!(&DATA_1, buf.as_slice());
+        }
+
+        {
+            let mut buf: Vec<u8> = Vec::new();
+            let len = slip.decode(reader, &mut buf).unwrap();
+            assert_eq!(DATA_2.len(), len);
+            assert_eq!(DATA_2.len(), buf.len());
+            assert_eq!(&DATA_2, buf.as_slice());
+        }
+    }
 }
