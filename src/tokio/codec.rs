@@ -31,10 +31,10 @@ impl SlipCodec {
 }
 
 impl Decoder for SlipCodec {
-    type Item = BytesMut;
+    type Item = Bytes;
     type Error = SlipError;
 
-    fn decode(&mut self, src: &mut BytesMut) -> Result<Option<BytesMut>, Self::Error> {
+    fn decode(&mut self, src: &mut BytesMut) -> Result<Option<Self::Item>, Self::Error> {
         self.decoder.decode(src)
     }
 }

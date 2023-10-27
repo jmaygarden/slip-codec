@@ -1,5 +1,5 @@
 use crate::{SlipError, MAX_PACKET_SIZE};
-use bytes::{Buf, BufMut, BytesMut};
+use bytes::{Buf, BufMut, Bytes, BytesMut};
 use tokio_util::codec::Decoder;
 
 /// SLIP decoding context
@@ -22,7 +22,7 @@ impl SlipDecoder {
 }
 
 impl Decoder for SlipDecoder {
-    type Item = BytesMut;
+    type Item = Bytes;
     type Error = SlipError;
 
     fn decode(&mut self, src: &mut BytesMut) -> Result<Option<Self::Item>, Self::Error> {
@@ -33,7 +33,7 @@ impl Decoder for SlipDecoder {
         };
 
         match self.inner.decode(src, dst) {
-            Ok(len) => Ok(Some(self.buf.split_to(len))),
+            Ok(len) => Ok(Some(self.buf.split_to(len).freeze())),
             Err(SlipError::EndOfStream) => Ok(None),
             Err(e) => Err(e),
         }
