@@ -40,10 +40,10 @@ impl Decoder for SlipCodec {
 }
 
 impl Encoder for SlipCodec {
-    type Item = Bytes;
+    type Item<'a> = Bytes;
     type Error = SlipError;
 
-    fn encode(&mut self, item: Self::Item, dst: &mut BytesMut) -> Result<(), Self::Error> {
+    fn encode(&mut self, item: Self::Item<'_>, dst: &mut BytesMut) -> Result<(), Self::Error> {
         self.encoder.encode(item, dst).map_err(SlipError::ReadError)
     }
 }
