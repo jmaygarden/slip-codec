@@ -5,7 +5,7 @@ edition = "2018"
 license = "MIT"
 name = "slip-codec"
 repository = "https://github.com/jmaygarden/slip-codec"
-version = "0.3.4"
+version = "0.4.0"
 
 [features]
 default = []
@@ -13,7 +13,7 @@ async-codec = ["asynchronous-codec", "bytes"]
 tokio-codec = ["bytes", "tokio-util"]
 
 [dependencies]
-asynchronous-codec = { version = "0.6", optional = true }
+asynchronous-codec = { version = "0.7", optional = true }
 bytes = { version = "1", optional = true }
 tokio-util = { version = "0.7", features = ["codec"], optional = true }
 

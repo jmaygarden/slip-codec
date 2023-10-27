@@ -17,10 +17,10 @@ impl SlipEncoder {
 }
 
 impl Encoder for SlipEncoder {
-    type Item = Bytes;
+    type Item<'a> = Bytes;
     type Error = std::io::Error;
 
-    fn encode(&mut self, item: Self::Item, dst: &mut BytesMut) -> Result<(), Self::Error> {
+    fn encode(&mut self, item: Self::Item<'_>, dst: &mut BytesMut) -> Result<(), Self::Error> {
         self.inner
             .encode(item.as_ref(), &mut dst.writer())
             .map(|_| ())
